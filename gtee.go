@@ -15,6 +15,25 @@ import (
 	"strconv"
 )
 
+func make_challenge() string {
+
+	var md5_str1 string = ""
+	var md5_str2 string = ""
+
+	rnd1 := rand.Intn(90)
+
+	rnd2 := rand.Intn(90)
+
+	rnd1str := strconv.Itoa(int(rnd1))
+
+	md5_str1 = tomd5(rnd1str)
+
+	rnd2str := strconv.Itoa(int(rnd2))
+
+	md5_str2 = tomd5(rnd2str)
+
+	return string(md5_str1 + md5_str2[:2])
+}
 func tomd5(str string) string {
 	h := md5.New()
 	h.Write([]byte(str)) // 需要加密的字符串为 123456
@@ -81,17 +100,31 @@ func (Geetest *Geetest) Register(client_type string, ip_address string, callback
 	p := &Register_result{}
 	p.Gt = Geetest.geetest_id
 	p.New_captcha = Geetest.NEW_CAPTCHA
-	p.Success = 0
+
 	err = json.Unmarshal([]byte(result), p)
 	if err != nil {
+		p.Success = 0
+		p.Challenge = make_challenge()
+		callback(p)
+		return
+	}
+
+	if len(p.Challenge) == 32 {
+
+		p.Success = 1
+		p.Challenge = tomd5(p.Challenge + Geetest.geetest_key)
+	} else {
+		p.Success = 0
+		p.Challenge = make_challenge()
 
 	}
+
 	callback(p)
 
 }
 
 func (Geetest *Geetest) Validate(fallback bool, challenge string, validate string, seccode string, callback func(bool)) {
-	fmt.Print("fallback+", fallback)
+
 	if fallback {
 		if tomd5(challenge) == validate {
 			callback(true)
@@ -107,20 +140,24 @@ func (Geetest *Geetest) Validate(fallback bool, challenge string, validate strin
 			datas.Json_format = strconv.Itoa(Geetest.JSON_FORMAT)
 			b, err := json.Marshal(datas)
 			if err != nil {
+				fmt.Printf("@@@ 110")
 				callback(false)
 			}
 			body := bytes.NewBuffer([]byte(b))
 			res, err := http.Post(Geetest.PROTOCOL+Geetest.API_SERVER+Geetest.VALIDATE_PATH, "application/json;charset=utf-8", body)
 			if err != nil {
+				fmt.Printf("@@@ 116")
 				callback(false)
 				return
 			}
 			result, err := ioutil.ReadAll(res.Body)
 			res.Body.Close()
 			if err != nil {
+				fmt.Printf("@@@ 123")
 				callback(false)
 				return
 			}
+
 			fmt.Printf("@@@ %s", result)
 
 		} else {
