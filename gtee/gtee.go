@@ -40,9 +40,11 @@ type Geetest struct {
 }
 
 //注册返回的结构
-type register_result struct {
-	Challenge string `json "challenge"`
-	Success   string `json "success"`
+type Register_result struct {
+	Challenge   string `json "challenge"`
+	Success     int    `json "success"`
+	Gt          string `json "gt"`
+	New_captcha bool   `json "new_captcha"`
 }
 
 //验证上传的结构
@@ -52,7 +54,7 @@ type validate_data struct {
 	Json_format string `json "json_format"`
 }
 
-func (Geetest *Geetest) Register(client_type string, ip_address string, callback func(bool, string, int)) {
+func (Geetest *Geetest) Register(client_type string, ip_address string, callback func(*Register_result)) {
 
 	surl := Geetest.PROTOCOL + Geetest.API_SERVER + Geetest.REGISTER_PATH
 	u, _ := url.Parse(surl)
@@ -66,27 +68,25 @@ func (Geetest *Geetest) Register(client_type string, ip_address string, callback
 	u.RawQuery = q.Encode()
 	res, err := http.Get(u.String())
 	if err != nil {
-		callback(false, "", 0)
+		fmt.Printf("error")
 		return
 	}
 	result, err := ioutil.ReadAll(res.Body)
 	res.Body.Close()
 	if err != nil {
-		callback(false, "", 404)
+		fmt.Printf("error")
 		return
 	}
 
-	p := &register_result{}
+	p := &Register_result{}
+	p.Gt = Geetest.geetest_id
+	p.New_captcha = Geetest.NEW_CAPTCHA
+	p.Success = 0
 	err = json.Unmarshal([]byte(result), p)
 	if err != nil {
-		callback(false, "", 404)
-		return
+
 	}
-	if len(p.Success) > 0 {
-		callback(true, p.Challenge, 200)
-	} else {
-		callback(true, p.Challenge, 202)
-	}
+	callback(p)
 
 }
 
