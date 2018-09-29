@@ -8,7 +8,7 @@
 `go get github.com/zcshan/gtee`
 
 
-例子：
+# 依赖
 ```
 package main.
 import (
@@ -17,8 +17,13 @@ import (
 
 var gt3id string = "xxx"
 var gt3key string = "xxx"
+```
 
-// # 注册
+# 注册
+```
+
+
+
 
 gteeobj := gtee.NewGeetest(gt3id, gt3key)
 
@@ -32,9 +37,11 @@ gteeobj.Register("unknnow", "unknnow", func(b *gtee.Register_result, str string)
    
 
 })
+```
 
+# 验证
+```
 
-// # 验证
 geetest_challenge := "xxx"
 geetest_validate := "xxx"
 geetest_seccode := "xxx"
